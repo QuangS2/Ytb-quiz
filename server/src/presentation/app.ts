@@ -14,6 +14,8 @@ import { optionalAuth, requireAuth } from './middleware/AuthMiddleware';
 
 dotenv.config();
 
+const serverStartTime = Date.now();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -94,6 +96,7 @@ app.get('/api/debug-env', (req, res) => {
     res.json({
       cwd: process.cwd(),
       platform: process.platform,
+      serverUptimeSeconds: Math.floor((Date.now() - serverStartTime) / 1000),
       distExists: fs.existsSync(distPath),
       distFiles,
       binaryInfo,
