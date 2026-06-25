@@ -2,10 +2,10 @@
   "name": "ytb-quiz-server",
   "version": "1.0.0",
   "description": "Backend server for Ytb-quiz using Clean Architecture",
-  "main": "dist/app.js",
+  "main": "dist/presentation/app.js",
   "scripts": {
     "build": "rimraf dist && tsc",
-    "start": "node dist/app.js",
+    "start": "node dist/presentation/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/presentation/app.ts"
   },
   "dependencies": {
