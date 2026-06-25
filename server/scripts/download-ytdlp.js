@@ -29,7 +29,7 @@ if (isWindows) {
 }
 
 const destPath = path.join(destDir, 'yt-dlp');
-const url = 'https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp';
+const url = 'https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_linux';
 
 writeLog(`[Download Ytdlp] Đang tải standalone binary từ ${url}...`);
 
