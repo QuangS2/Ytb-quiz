@@ -18,7 +18,34 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Nếu không có origin (ví dụ gọi từ Postman, curl, hoặc server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Danh sách các domain được phép
+    const allowedOrigins = [
+      process.env.FRONTEND_URL, // Domain production từ Railway/Render (vd: https://ytb-quiz.pages.dev)
+      'http://localhost:5173',  // Local frontend
+      'http://127.0.0.1:5173',  // Local frontend (IP)
+      /\.workers\.dev$/,        // Cloudflare Workers preview
+      /\.pages\.dev$/           // Cloudflare Pages preview
+    ];
+
+    // Kiểm tra xem origin gửi lên có khớp với bất kỳ domain nào trong danh sách không
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (!allowedOrigin) return false;
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      }
+      return allowedOrigin.test(origin); // Dành cho regex
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS Policy: Origin not allowed'), false);
+    }
+  },
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'x-gemini-key', 'x-device-performance'],
 }));
