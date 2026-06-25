@@ -61,6 +61,49 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Ytb-quiz backend is running.' });
 });
 
+app.get('/api/debug-env', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const distPath = path.join(process.cwd(), 'dist');
+    const binaryPath = path.join(distPath, 'yt-dlp');
+    const logPath = path.join(distPath, 'download-log.txt');
+    
+    let distFiles: string[] = [];
+    if (fs.existsSync(distPath)) {
+      distFiles = fs.readdirSync(distPath);
+    }
+    
+    let downloadLog = 'No log found';
+    if (fs.existsSync(logPath)) {
+      downloadLog = fs.readFileSync(logPath, 'utf8');
+    }
+    
+    let binaryInfo = {};
+    if (fs.existsSync(binaryPath)) {
+      const stats = fs.statSync(binaryPath);
+      binaryInfo = {
+        exists: true,
+        size: stats.size,
+        mode: stats.mode
+      };
+    } else {
+      binaryInfo = { exists: false };
+    }
+    
+    res.json({
+      cwd: process.cwd(),
+      platform: process.platform,
+      distExists: fs.existsSync(distPath),
+      distFiles,
+      binaryInfo,
+      downloadLog
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 // Xác thực & Đăng nhập Google OAuth
 app.post(
   '/api/auth/google',

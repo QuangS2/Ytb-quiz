@@ -3,37 +3,49 @@ const path = require('path');
 const https = require('https');
 
 const isWindows = process.platform === 'win32';
-
-// Trên Windows, chúng ta không cần tải standalone binary vì local sử dụng python -m yt_dlp
-if (isWindows) {
-  console.log('[Download Ytdlp] Đang chạy trên Windows, bỏ qua tải standalone binary.');
-  process.exit(0);
-}
-
 const destDir = path.join(__dirname, '..', 'dist');
-const destPath = path.join(destDir, 'yt-dlp');
+const logPath = path.join(destDir, 'download-log.txt');
 
 if (!fs.existsSync(destDir)) {
   fs.mkdirSync(destDir, { recursive: true });
 }
 
+function writeLog(msg) {
+  console.log(msg);
+  fs.appendFileSync(logPath, msg + '\n');
+}
+
+// Xóa file log cũ nếu có
+if (fs.existsSync(logPath)) {
+  fs.unlinkSync(logPath);
+}
+
+writeLog(`[Download Ytdlp] Bắt đầu lúc ${new Date().toISOString()}`);
+writeLog(`[Download Ytdlp] Platform: ${process.platform}`);
+
+if (isWindows) {
+  writeLog('[Download Ytdlp] Đang chạy trên Windows, bỏ qua tải standalone binary.');
+  process.exit(0);
+}
+
+const destPath = path.join(destDir, 'yt-dlp');
 const url = 'https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp';
 
-console.log(`[Download Ytdlp] Đang tải standalone binary từ ${url}...`);
+writeLog(`[Download Ytdlp] Đang tải standalone binary từ ${url}...`);
 
 const file = fs.createWriteStream(destPath);
 
 function download(downloadUrl) {
   https.get(downloadUrl, (response) => {
-    // Xử lý redirect (GitHub releases thường redirect sang codeload hoặc s3)
+    writeLog(`[Download Ytdlp] Response status: ${response.statusCode}`);
     if (response.statusCode === 302 || response.statusCode === 301) {
-      console.log(`[Download Ytdlp] Redirect sang: ${response.headers.location}`);
+      writeLog(`[Download Ytdlp] Redirect sang: ${response.headers.location}`);
       download(response.headers.location);
       return;
     }
 
     if (response.statusCode !== 200) {
-      console.error(`[Download Ytdlp] Lỗi tải file: HTTP Status ${response.statusCode}`);
+      writeLog(`[Download Ytdlp] Lỗi tải file: HTTP Status ${response.statusCode}`);
       process.exit(1);
     }
 
@@ -41,19 +53,23 @@ function download(downloadUrl) {
 
     file.on('finish', () => {
       file.close(() => {
-        console.log('[Download Ytdlp] Đã tải xong yt-dlp binary.');
+        writeLog('[Download Ytdlp] Đã tải xong yt-dlp binary.');
         try {
           fs.chmodSync(destPath, '755');
-          console.log('[Download Ytdlp] Đã cấp quyền thực thi (chmod +x) cho yt-dlp.');
+          writeLog('[Download Ytdlp] Đã cấp quyền thực thi (chmod +x) cho yt-dlp.');
+          
+          // Kiểm tra xem file có thực sự đọc được và có kích thước bao nhiêu
+          const stats = fs.statSync(destPath);
+          writeLog(`[Download Ytdlp] Đã xác minh file size: ${stats.size} bytes`);
         } catch (chmodErr) {
-          console.error('[Download Ytdlp] Lỗi khi chmod:', chmodErr.message);
+          writeLog(`[Download Ytdlp] Lỗi khi chmod/verify: ${chmodErr.message}`);
         }
         process.exit(0);
       });
     });
   }).on('error', (err) => {
     fs.unlink(destPath, () => {});
-    console.error(`[Download Ytdlp] Lỗi kết nối: ${err.message}`);
+    writeLog(`[Download Ytdlp] Lỗi kết nối: ${err.message}`);
     process.exit(1);
   });
 }
