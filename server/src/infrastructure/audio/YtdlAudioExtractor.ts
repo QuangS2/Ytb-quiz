@@ -121,6 +121,11 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
     try {
       console.log(`[YtdlAudioExtractor] Thử tải bằng play-dl cho ID: ${youtubeId}`);
       const playStream = await play.stream(cleanUrl, { quality: 2, discordPlayerCompatibility: true });
+      
+      playStream.stream.on('error', (err) => {
+        console.error('[YtdlAudioExtractor - play-dl stream error]:', err.message);
+      });
+
       console.log('[YtdlAudioExtractor] Khởi tạo play-dl stream thành công.');
       return playStream.stream;
     } catch (playErr: any) {
@@ -136,8 +141,14 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
         quality: 'best',
         format: 'mp4'
       });
+
+      const nodeStream = Readable.from(ytStream as any);
+      nodeStream.on('error', (err) => {
+        console.error('[YtdlAudioExtractor - youtubei stream error]:', err.message);
+      });
+
       console.log('[YtdlAudioExtractor] Khởi tạo youtubei.js stream thành công.');
-      return Readable.from(ytStream as any);
+      return nodeStream;
     } catch (ytErr: any) {
       console.error(`[YtdlAudioExtractor] youtubei.js thất bại: ${ytErr.message}`);
     }
