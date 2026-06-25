@@ -14,6 +14,14 @@ import { optionalAuth, requireAuth } from './middleware/AuthMiddleware';
 
 dotenv.config();
 
+process.on('uncaughtException', (err) => {
+  console.error('[Global Uncaught Exception]:', err.message, err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Global Unhandled Rejection]:', reason);
+});
+
 const serverStartTime = Date.now();
 
 const app = express();
@@ -193,9 +201,12 @@ mongoose
       console.error('[Diagnostic] Error during environment check:', diagErr.message);
     }
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
+    // Tăng thời gian chờ (timeout) của socket server lên 10 phút để tránh bị ngắt kết nối giữa chừng khi tải & xử lý audio lớn
+    server.timeout = 600000;
+    server.keepAliveTimeout = 120000;
   })
   .catch((err) => {
     console.error('Failed to connect to MongoDB:', err);

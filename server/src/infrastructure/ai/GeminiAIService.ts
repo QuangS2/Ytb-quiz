@@ -46,9 +46,16 @@ export class GeminiAIService implements AIServicePort {
 
       // 3. Đợi file xử lý thành công (PROCESSING -> ACTIVE)
       let fileState = await ai.files.get({ name: fileRef.name });
-      while (fileState.state === 'PROCESSING') {
+      let waitAttempts = 0;
+      const maxWaitAttempts = 100; // Tối đa 5 phút (100 * 3 giây)
+      while (fileState.state === 'PROCESSING' && waitAttempts < maxWaitAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         fileState = await ai.files.get({ name: fileRef.name });
+        waitAttempts++;
+      }
+
+      if (fileState.state === 'PROCESSING') {
+        throw new Error('Gemini File API xử lý âm thanh quá lâu (vượt quá 5 phút).');
       }
 
       if (fileState.state === 'FAILED') {

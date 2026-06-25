@@ -72,7 +72,7 @@ export const Dashboard: React.FC = () => {
 
     const timer = setInterval(() => {
       setLoadingStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
-    }, 4500);
+    }, 9000);
 
     return () => clearInterval(timer);
   }, [status]);
