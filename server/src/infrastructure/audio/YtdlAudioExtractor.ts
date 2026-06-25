@@ -1,6 +1,8 @@
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import crypto from 'crypto';
 import { Readable, PassThrough } from 'stream';
 import { AudioExtractorPort } from '../../application/port/output/AudioExtractorPort';
 import { AudioExtractionException } from '../../domain/exception/AudioExtractionException';
@@ -23,29 +25,62 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
 
   private async extractWithYtdlp(youtubeId: string): Promise<Readable> {
     return new Promise((resolve, reject) => {
+      let cookieFilePath: string | null = null;
       try {
         const cleanUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
         const { command, baseArgs } = this.getCommandAndArgs();
 
+        const cookiesContent = process.env.YOUTUBE_COOKIES_CONTENT;
+        if (cookiesContent && cookiesContent.trim().length > 0) {
+          try {
+            const tempDir = os.tmpdir();
+            const randomName = `yt-dlp-cookies-${crypto.randomBytes(6).toString('hex')}.txt`;
+            cookieFilePath = path.join(tempDir, randomName);
+            fs.writeFileSync(cookieFilePath, cookiesContent.trim() + '\n', 'utf8');
+            console.log(`[YtdlAudioExtractor - Cookies] Đã ghi cookie tạm thời tại: ${cookieFilePath}`);
+          } catch (cookieErr: any) {
+            console.error('[YtdlAudioExtractor - Cookies] Lỗi khi tạo file cookie tạm:', cookieErr.message);
+          }
+        }
+
         console.log(`[YtdlAudioExtractor - yt-dlp] Sử dụng: ${command} ${baseArgs.join(' ')} để tải video ID: ${youtubeId}`);
         
-        const child = spawn(command, [
+        const args = [
           ...baseArgs,
           '-f', 'bestaudio',
           '-o', '-',
           '--no-playlist',
-          '--extractor-args', 'youtube:player-client=web_embedded,android,mweb',
-          cleanUrl
-        ]);
+          '--extractor-args', 'youtube:player-client=web_embedded,android,mweb'
+        ];
+
+        if (cookieFilePath) {
+          args.push('--cookies', cookieFilePath);
+        }
+
+        args.push(cleanUrl);
+
+        const child = spawn(command, args);
 
         const passThrough = new PassThrough();
         const stderrChunks: Buffer[] = [];
         let hasData = false;
         let isSettled = false;
 
+        const cleanupCookie = () => {
+          if (cookieFilePath && fs.existsSync(cookieFilePath)) {
+            try {
+              fs.unlinkSync(cookieFilePath);
+              console.log(`[YtdlAudioExtractor - Cookies] Đã dọn dẹp file cookie tạm: ${cookieFilePath}`);
+            } catch (err: any) {
+              console.error(`[YtdlAudioExtractor - Cookies] Lỗi khi xóa file cookie tạm: ${err.message}`);
+            }
+          }
+        };
+
         // Bắt lỗi nếu không khởi chạy được (ví dụ ENOENT)
         child.on('error', (err: any) => {
           console.error('[YtdlAudioExtractor - yt-dlp] Lỗi khởi chạy:', err.message);
+          cleanupCookie();
           if (!isSettled) {
             isSettled = true;
             reject(new AudioExtractionException(youtubeId, `Không thể khởi chạy yt-dlp. Chi tiết: ${err.message}`));
@@ -76,6 +111,7 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
         });
 
         child.on('close', (code) => {
+          cleanupCookie();
           const stderrStr = Buffer.concat(stderrChunks).toString().trim();
           if (code !== 0) {
             console.error(`[YtdlAudioExtractor - yt-dlp] Tiến trình kết thúc với mã lỗi ${code}. Stderr: ${stderrStr}`);
@@ -98,6 +134,9 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
         });
 
       } catch (error: any) {
+        if (cookieFilePath && fs.existsSync(cookieFilePath)) {
+          try { fs.unlinkSync(cookieFilePath); } catch (e) {}
+        }
         reject(new AudioExtractionException(youtubeId, error.message));
       }
     });
