@@ -6,36 +6,24 @@ import { AudioExtractorPort } from '../../application/port/output/AudioExtractor
 import { AudioExtractionException } from '../../domain/exception/AudioExtractionException';
 
 export class YtdlAudioExtractor implements AudioExtractorPort {
-  private getDlpPath(): string {
-    const userProfile = process.env.USERPROFILE || '';
-    if (userProfile) {
-      const pythonDir = path.join(userProfile, 'AppData', 'Roaming', 'Python');
-      if (fs.existsSync(pythonDir)) {
-        try {
-          const subdirs = fs.readdirSync(pythonDir);
-          for (const subdir of subdirs) {
-            const candidate = path.join(pythonDir, subdir, 'Scripts', 'yt-dlp.exe');
-            if (fs.existsSync(candidate)) {
-              return candidate;
-            }
-          }
-        } catch (e) {
-          // Bỏ qua lỗi đọc thư mục
-        }
-      }
+  private getCommandAndArgs(): { command: string; baseArgs: string[] } {
+    const isWindows = process.platform === 'win32';
+    if (isWindows) {
+      return { command: 'python', baseArgs: ['-m', 'yt_dlp'] };
     }
-    return 'yt-dlp'; // Mặc định trong PATH (dùng cho Linux/Railway)
+    return { command: 'python3', baseArgs: ['-m', 'yt_dlp'] };
   }
 
   public async extractAudio(youtubeId: string): Promise<Readable> {
     return new Promise((resolve, reject) => {
       try {
         const cleanUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
-        const ytDlpPath = this.getDlpPath();
+        const { command, baseArgs } = this.getCommandAndArgs();
 
-        console.log(`[YtdlAudioExtractor] Sử dụng yt-dlp tại: ${ytDlpPath} để tải video ID: ${youtubeId}`);
+        console.log(`[YtdlAudioExtractor] Sử dụng: ${command} ${baseArgs.join(' ')} để tải video ID: ${youtubeId}`);
         
-        const child = spawn(ytDlpPath, [
+        const child = spawn(command, [
+          ...baseArgs,
           '-f', 'bestaudio',
           '-o', '-',
           '--no-playlist',
