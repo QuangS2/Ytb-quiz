@@ -7,6 +7,6 @@
 [phases.build]
   cmds = [
     "npm run build",
-    "curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp",
-    "chmod +x yt-dlp"
+    "curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o dist/yt-dlp",
+    "chmod +x dist/yt-dlp"
   ]

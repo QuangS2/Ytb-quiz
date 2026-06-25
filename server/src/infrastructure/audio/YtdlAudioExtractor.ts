@@ -12,8 +12,8 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
       return { command: 'python', baseArgs: ['-m', 'yt_dlp'] };
     }
 
-    // Trên Linux/macOS, ưu tiên sử dụng standalone binary cục bộ
-    const localYtdlp = path.join(process.cwd(), 'yt-dlp');
+    // Trên Linux/macOS, ưu tiên sử dụng standalone binary cục bộ nằm trong thư mục dist
+    const localYtdlp = path.join(process.cwd(), 'dist', 'yt-dlp');
     if (fs.existsSync(localYtdlp)) {
       return { command: localYtdlp, baseArgs: [] };
     }
@@ -38,31 +38,39 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
         ]);
 
         const passThrough = new PassThrough();
+        const stderrChunks: Buffer[] = [];
 
-        // Bắt lỗi nếu không tìm thấy phần mềm yt-dlp (ví dụ trên Railway chưa cài)
+        // Bắt lỗi nếu không khởi chạy được (ví dụ ENOENT)
         child.on('error', (err: any) => {
           console.error('[YtdlAudioExtractor] Lỗi khởi chạy yt-dlp:', err.message);
-          reject(new AudioExtractionException(youtubeId, `Không thể khởi chạy yt-dlp. Đảm bảo phần mềm đã được cài đặt. Chi tiết: ${err.message}`));
+          passThrough.destroy(new AudioExtractionException(youtubeId, `Không thể khởi chạy yt-dlp. Chi tiết: ${err.message}`));
         });
 
-        // Bắt lỗi trong quá trình tải
-        child.stderr.on('data', (data) => {
-          const msg = data.toString();
-          if (msg.toLowerCase().includes('error')) {
-             console.error('[YtdlAudioExtractor stderr]:', msg);
-          }
+        // Tích lũy dữ liệu stderr để trích xuất thông tin lỗi chi tiết
+        child.stderr.on('data', (chunk) => {
+          stderrChunks.push(Buffer.from(chunk));
         });
+
+        // Pipe stdout (luồng audio) vào PassThrough nhưng không tự động đóng stream (end: false)
+        // để ta tự quyết định qua exit code của tiến trình con
+        child.stdout.pipe(passThrough, { end: false });
 
         child.on('close', (code) => {
+          const stderrStr = Buffer.concat(stderrChunks).toString().trim();
           if (code !== 0) {
-            console.warn(`[YtdlAudioExtractor] Tiến trình kết thúc với mã lỗi ${code}`);
-            passThrough.destroy(new Error(`yt-dlp exited with error code ${code}. Có thể do IP bị YouTube chặn hoặc thiếu bản cập nhật yt-dlp mới nhất.`));
+            console.error(`[YtdlAudioExtractor] Tiến trình kết thúc với mã lỗi ${code}. Stderr: ${stderrStr}`);
+            passThrough.destroy(new AudioExtractionException(
+              youtubeId, 
+              `yt-dlp kết thúc với mã lỗi ${code}. Chi tiết: ${stderrStr || 'Không có thông tin lỗi trong stderr.'}`
+            ));
+          } else {
+            // Hoàn thành thành công, đóng passThrough
+            passThrough.end();
           }
         });
 
-        // Pipe stdout (luồng audio) vào PassThrough
-        child.stdout.pipe(passThrough);
-
+        // Giải quyết Promise ngay lập tức bằng passThrough. Nếu sau đó tiến trình lỗi,
+        // passThrough sẽ bị destroy với lỗi, và vòng lặp for await trong GeminiAIService sẽ ném ra lỗi này.
         resolve(passThrough);
       } catch (error: any) {
         reject(new AudioExtractionException(youtubeId, error.message));
