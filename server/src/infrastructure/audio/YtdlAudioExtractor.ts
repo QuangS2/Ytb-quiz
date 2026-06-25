@@ -61,6 +61,7 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
         child.on('close', (code) => {
           if (code !== 0) {
             console.warn(`[YtdlAudioExtractor] Tiến trình kết thúc với mã lỗi ${code}`);
+            passThrough.destroy(new Error(`yt-dlp exited with error code ${code}. Có thể do IP bị YouTube chặn hoặc thiếu bản cập nhật yt-dlp mới nhất.`));
           }
         });
 

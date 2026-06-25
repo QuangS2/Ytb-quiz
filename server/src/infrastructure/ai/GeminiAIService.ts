@@ -31,6 +31,10 @@ export class GeminiAIService implements AIServicePort {
       }
       const buffer = Buffer.concat(chunks);
 
+      if (buffer.length === 0) {
+        throw new Error('Không thể tải âm thanh từ YouTube (Buffer rỗng 0 bytes). Có thể do YouTube chặn IP máy chủ hoặc video không khả dụng.');
+      }
+
       // 2. Upload file lên Gemini File API bằng Blob
       // Node v18+ hỗ trợ lớp Blob toàn cục
       fileRef = await ai.files.upload({
