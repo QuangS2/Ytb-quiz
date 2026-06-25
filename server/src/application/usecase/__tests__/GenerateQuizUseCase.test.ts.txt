@@ -1,0 +1,25 @@
+TEST_SUITE GenerateQuizUseCaseTests:
+    DEPENDENCY MockQuizRepository
+    DEPENDENCY MockLectureContentRepository
+    DEPENDENCY MockAudioExtractor
+    DEPENDENCY MockAIService
+
+    TEST Case1_CacheMiss:
+        - Call execute with new YouTube URL.
+        - Verify audio is extracted, AI is called to clean/generate quiz.
+        - Verify quiz is saved to Repository and returned correctly.
+
+    TEST Case2_CacheHitLowPerformance:
+        - Mock existing quiz in Repository.
+        - Call execute with existing URL.
+        - Verify cached quiz is returned immediately.
+        - Verify no audio download, AI cleaning, or re-generation occurs.
+
+    TEST Case3_CacheHitHighPerformance:
+        - Mock existing quiz and LectureContent in Repository.
+        - Call execute with devicePerformance = "high".
+        - Verify cached quiz is returned immediately (non-blocking).
+        - Wait for background refinement task to complete.
+        - Verify audio is extracted, AI is called to merge scripts and regenerate questions.
+        - Verify LectureContent script is updated and version incremented.
+        - Verify Quiz questions are updated in Repository.

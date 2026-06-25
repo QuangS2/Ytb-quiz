@@ -1,0 +1,35 @@
+INTERFACE AttemptAnswer:
+    questionId: string
+    selectedOptionIndex: number
+    isCorrect: boolean
+
+CLASS QuizAttempt:
+    READONLY id: string
+    userId: string
+    quizId: string
+    mode: "full-test" | "instant-feedback"
+    score: number
+    totalQuestions: number
+    timeTaken: number
+    answers: array of AttemptAnswer
+    READONLY attemptedAt: Date
+
+    CONSTRUCTOR(
+        id: string,
+        userId: string,
+        quizId: string,
+        mode: "full-test" | "instant-feedback",
+        score: number,
+        totalQuestions: number,
+        timeTaken: number,
+        answers: array of AttemptAnswer,
+        attemptedAt: Date
+    )
+
+    METHOD calculateScore(): number:
+        correctCount = 0
+        FOR EACH ans in answers:
+            IF ans.isCorrect:
+                correctCount++
+        score = correctCount
+        return score

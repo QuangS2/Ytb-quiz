@@ -1,0 +1,6 @@
+INTERFACE AIServicePort:
+    METHOD validateApiKey(apiKey: string): Promise<boolean>
+    METHOD extractLectureContent(audioStream: ReadableStream, mimeType: string, apiKey: string): Promise<{ refinedScript: string, title: string, qualityScore: number }>
+    METHOD generateQuizFromContent(refinedScript: string, apiKey: string): Promise<array of Question>
+    METHOD mergeAndRefineScripts(oldScript: string, newScript: string, apiKey: string): Promise<string>
+    METHOD generateReplacementQuestion(refinedScript: string, faultyQuestion: Question, apiKey: string): Promise<Question>

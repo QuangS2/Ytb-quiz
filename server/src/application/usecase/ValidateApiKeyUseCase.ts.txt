@@ -1,0 +1,14 @@
+CLASS ValidateApiKeyUseCase:
+    DEPENDENCY aiServicePort: AIServicePort
+
+    CONSTRUCTOR(aiServicePort: AIServicePort)
+
+    METHOD execute(apiKey: string): Promise<boolean>:
+        IF apiKey is empty or null:
+            THROW InvalidGeminiApiKeyException("Khóa API Gemini là bắt buộc.")
+        
+        isValid = CALL aiServicePort.validateApiKey(apiKey)
+        IF isValid is false:
+            THROW InvalidGeminiApiKeyException("Khóa API Gemini không hoạt động hoặc không hợp lệ.")
+            
+        RETURN true

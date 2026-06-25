@@ -1,0 +1,24 @@
+CLASS UserMapper:
+    STATIC METHOD toDomain(document): User:
+        IF document is null:
+            THROW ERROR "Không thể map tài liệu null sang thực thể User"
+        RETURN NEW User(
+            document._id OR document.id,
+            document.googleId,
+            document.email,
+            document.displayName,
+            document.avatarUrl,
+            document.passwordHash,
+            document.createdAt
+        )
+
+    STATIC METHOD toPersistence(domain: User): any:
+        RETURN {
+            _id: domain.id,
+            googleId: domain.googleId,
+            email: domain.email,
+            displayName: domain.displayName,
+            avatarUrl: domain.avatarUrl,
+            passwordHash: domain.passwordHash,
+            createdAt: domain.createdAt
+        }

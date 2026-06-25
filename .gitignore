@@ -1,0 +1,11 @@
+# =========================================================================
+# Work Process & Documentation Files
+# =========================================================================
+# Ignore work-process/temporary markdown files, task lists, and plan files
+*.md
+!README.md
+!**/README.md
+!CHANGELOG.md
+!**/CHANGELOG.md
+!CONTRIBUTING.md
+!**/CONTRIBUTING.md

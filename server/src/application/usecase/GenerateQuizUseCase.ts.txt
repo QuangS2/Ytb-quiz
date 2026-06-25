@@ -1,0 +1,111 @@
+CLASS GenerateQuizUseCase:
+    DEPENDENCY quizRepository: QuizRepositoryPort
+    DEPENDENCY lectureContentRepository: LectureContentRepositoryPort
+    DEPENDENCY audioExtractor: AudioExtractorPort
+    DEPENDENCY aiService: AIServicePort
+
+    CONSTRUCTOR(
+        quizRepository,
+        lectureContentRepository,
+        audioExtractor,
+        aiService
+    )
+
+    METHOD execute(dto: GenerateQuizRequestDto): Promise<Quiz>:
+        # 1. Khởi tạo và validate YoutubeUrl VO
+        ytUrl = NEW YoutubeUrl(dto.url)
+        youtubeId = ytUrl.youtubeId
+
+        # 2. Kiểm tra trùng lặp theo mistake.md
+        existingQuiz = CALL quizRepository.findByYoutubeId(youtubeId)
+        IF existingQuiz is not null:
+            # Nếu máy mạnh (x-device-performance == 'high'), kích hoạt luồng tối ưu kịch bản chạy ngầm
+            IF dto.devicePerformance == "high":
+                CALL runBackgroundRefinement(youtubeId, existingQuiz, dto.apiKey) WITHOUT AWAIT
+            
+            RETURN existingQuiz
+
+        # 3. Lấy hoặc tạo LectureContent
+        lectureContent = CALL lectureContentRepository.findByYoutubeId(youtubeId)
+        IF lectureContent is null:
+            # Tách audio stream
+            audioStream = CALL audioExtractor.extractAudio(youtubeId)
+
+            # Trích xuất kịch bản bài học (AI Cleaner)
+            lectureData = CALL aiService.extractLectureContent(audioStream, "audio/mp4", dto.apiKey)
+
+            # Tạo và lưu LectureContent
+            lectureId = generateRandomId()
+            lectureContent = NEW LectureContent(
+                lectureId,
+                youtubeId,
+                lectureData.title,
+                lectureData.refinedScript,
+                1,
+                lectureData.qualityScore
+            )
+            CALL lectureContentRepository.save(lectureContent)
+
+        # 6. Sinh bộ câu hỏi Quiz (AI Generator)
+        rawQuestions = CALL aiService.generateQuizFromContent(lectureContent.refinedScript, dto.apiKey)
+        
+        # Ánh xạ câu hỏi với metrics ban đầu = 0
+        questions = array of Omit<Question, "metrics">
+        FOR EACH rq in rawQuestions:
+            questions.push({
+                ...rq,
+                metrics: { upvotes: 0, downvotes: 0, timesAnswered: 0, timesCorrect: 0 }
+            })
+
+        # 7. Tạo và lưu Quiz
+        quizId = generateRandomId()
+        quiz = NEW Quiz(
+            quizId,
+            lectureContent.id,
+            dto.creatorId,
+            youtubeId,
+            lectureContent.title,
+            "Bài trắc nghiệm sinh tự động cho bài giảng " + lectureContent.title,
+            questions,
+            0,
+            0
+        )
+        savedQuiz = CALL quizRepository.save(quiz)
+
+        RETURN savedQuiz
+
+    PRIVATE METHOD runBackgroundRefinement(youtubeId: string, existingQuiz: Quiz, apiKey: string): Promise<void>:
+        # Luồng chạy ngầm: Tải âm thanh mới, trích xuất và đối chiếu hợp nhất kịch bản
+        TRY:
+            oldLecture = CALL lectureContentRepository.findByYoutubeId(youtubeId)
+            IF oldLecture is null:
+                RETURN
+
+            audioStream = CALL audioExtractor.extractAudio(youtubeId)
+            newLectureData = CALL aiService.extractLectureContent(audioStream, "audio/mp4", apiKey)
+            
+            mergedScript = CALL aiService.mergeAndRefineScripts(oldLecture.refinedScript, newLectureData.refinedScript, apiKey)
+            
+            # Cập nhật và lưu LectureContent tối ưu
+            oldLecture.refinedScript = mergedScript
+            oldLecture.version = oldLecture.version + 1
+            oldLecture.qualityScore = max(oldLecture.qualityScore, newLectureData.qualityScore)
+            CALL lectureContentRepository.save(oldLecture)
+
+            # Sinh lại bộ câu hỏi mới từ kịch bản sạch đã tối ưu
+            rawQuestions = CALL aiService.generateQuizFromContent(mergedScript, apiKey)
+            
+            newQuestions = []
+            FOR EACH rq in rawQuestions:
+                newQuestions.push({
+                    ...rq,
+                    metrics: { upvotes: 0, downvotes: 0, timesAnswered: 0, timesCorrect: 0 }
+                })
+            
+            # Cập nhật và lưu Quiz mới
+            existingQuiz.questions = newQuestions
+            existingQuiz.title = newLectureData.title
+            CALL quizRepository.save(existingQuiz)
+        CATCH error:
+            LOG error "Background refinement failed: " + error.message
+

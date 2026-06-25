@@ -1,0 +1,21 @@
+import { QuizRepositoryPort } from '../port/output/QuizRepositoryPort';
+import { QuizNotFoundException } from '../../domain/exception/QuizNotFoundException';
+import { QuizForbiddenException } from '../../domain/exception/QuizForbiddenException';
+
+interface DeleteQuizRequestDto
+  quizId: string
+  userId: string
+
+class DeleteQuizUseCase
+  constructor(quizRepository: QuizRepositoryPort)
+
+  async execute(dto: DeleteQuizRequestDto): Promise<void>
+    const { quizId, userId } = dto
+    const quiz = await quizRepository.findById(quizId)
+    if not quiz
+      throw new QuizNotFoundException(quizId)
+    
+    if quiz.creatorId !== userId
+      throw new QuizForbiddenException()
+    
+    await quizRepository.delete(quizId)

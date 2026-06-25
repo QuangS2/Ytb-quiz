@@ -1,0 +1,20 @@
+TEST_SUITE SubmitQuizUseCaseTests:
+    DEPENDENCY MockQuizRepository
+    DEPENDENCY MockQuizAttemptRepository
+
+    TEST Case1_QuizNotFound:
+        - Call execute with a non-existent quizId.
+        - Verify it rejects and throws QuizNotFoundException.
+
+    TEST Case2_QuestionNotFound:
+        - Save a mock quiz with specific questions in Repository.
+        - Call execute containing an answer for a wrong question ID.
+        - Verify it rejects and throws BusinessException with QUESTION_NOT_FOUND code.
+
+    TEST Case3_ValidSubmission:
+        - Save a mock quiz with two questions in Repository.
+        - Call execute with correct answer for first question and incorrect answer for second question.
+        - Verify returned score is 1 out of 2.
+        - Verify correctOptionIndex and explanation are returned for validation.
+        - Verify questions' answer metrics (timesAnswered, timesCorrect) are updated in Repository.
+        - Verify attempt is saved correctly in MockQuizAttemptRepository.

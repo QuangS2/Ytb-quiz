@@ -1,0 +1,42 @@
+IMPORT assert FROM node:assert
+IMPORT EvaluateQuestionUseCase FROM application/usecase/EvaluateQuestionUseCase
+IMPORT QuizRepositoryPort FROM application/port/output/QuizRepositoryPort
+IMPORT LectureContentRepositoryPort FROM application/port/output/LectureContentRepositoryPort
+IMPORT AIServicePort FROM application/port/output/AIServicePort
+IMPORT Quiz FROM domain/model/Quiz
+IMPORT LectureContent FROM domain/model/LectureContent
+
+CLASS MockQuizRepository IMPLEMENTS QuizRepositoryPort:
+    quizzes: Array of Quiz
+    METHOD save(quiz)
+    METHOD findById(id)
+
+CLASS MockLectureContentRepository IMPLEMENTS LectureContentRepositoryPort:
+    contents: Array of LectureContent
+    METHOD save(content)
+    METHOD findById(id)
+
+CLASS MockAIService IMPLEMENTS AIServicePort:
+    callCount: integer
+    METHOD generateReplacementQuestion(refinedScript, faultyQuestion, apiKey)
+
+FUNCTION runTests():
+    // Setup Mock repositories and entities.
+    
+    // Test Case 1: Quiz không tồn tại
+    // - Thực thi usecase với id không tồn tại
+    // - Mong đợi ném QuizNotFoundException
+    
+    // Test Case 2: Câu hỏi không tồn tại
+    // - Thực thi với id câu hỏi không tồn tại trong Quiz
+    // - Mong đợi ném QuestionNotFoundException
+    
+    // Test Case 3: Vote UP hợp lệ
+    // - Thực thi vote UP và kiểm tra metrics upvotes tăng 1.
+    // - Đảm bảo AI Service không được gọi (callCount = 0).
+    
+    // Test Case 4: Vote DOWN gây lỗi -> kích hoạt Self-Healing
+    // - Thực thi vote DOWN và truyền API Key
+    // - Đợi background thread thực hiện xong.
+    // - Đảm bảo AI Service được gọi (callCount = 1).
+    // - Đảm bảo câu hỏi được thay thế trong Quiz và metrics của nó được reset về 0.

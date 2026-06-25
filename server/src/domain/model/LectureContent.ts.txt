@@ -1,0 +1,26 @@
+CLASS LectureContent:
+    READONLY id: string
+    youtubeId: string
+    title: string
+    refinedScript: string
+    version: number
+    qualityScore: number
+    READONLY createdAt: Date
+    updatedAt: Date
+
+    CONSTRUCTOR(
+        id: string,
+        youtubeId: string,
+        title: string,
+        refinedScript: string,
+        version: number,
+        qualityScore: number,
+        createdAt: Date,
+        updatedAt: Date
+    )
+
+    METHOD updateScript(newScript: string, score: number): void:
+        refinedScript = newScript
+        qualityScore = score
+        version = version + 1
+        updatedAt = CURRENT_DATE

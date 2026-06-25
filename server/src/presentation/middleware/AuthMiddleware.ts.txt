@@ -1,0 +1,32 @@
+IMPORT Request, Response, NextFunction FROM express
+IMPORT JwtAuthTokenService FROM infrastructure/security/JwtAuthTokenService
+IMPORT AuthException FROM domain/exception/AuthException
+
+GLOBAL EXTEND Express.Request:
+    user?: { id: string, email: string }
+
+FUNCTION optionalAuth(req: Request, res: Response, next: NextFunction):
+    authHeader = req.headers.authorization
+    IF authHeader STARTS WITH "Bearer ":
+        token = authHeader.substring(7)
+        TRY:
+            payload = tokenService.verifyToken(token)
+            req.user = { id: payload.userId, email: payload.email }
+        CATCH:
+            // Ignore error for optional mode
+            PASS
+    next()
+
+FUNCTION requireAuth(req: Request, res: Response, next: NextFunction):
+    authHeader = req.headers.authorization
+    IF authHeader IS NULL OR NOT STARTS WITH "Bearer ":
+        next(NEW AuthException("AUTH_UNAUTHORIZED", "..."))
+        RETURN
+        
+    token = authHeader.substring(7)
+    TRY:
+        payload = tokenService.verifyToken(token)
+        req.user = { id: payload.userId, email: payload.email }
+        next()
+    CATCH(err):
+        next(err)

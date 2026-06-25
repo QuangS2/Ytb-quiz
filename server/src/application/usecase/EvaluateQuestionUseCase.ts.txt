@@ -1,0 +1,50 @@
+IMPORT QuizRepositoryPort FROM application/port/output/QuizRepositoryPort
+IMPORT LectureContentRepositoryPort FROM application/port/output/LectureContentRepositoryPort
+IMPORT AIServicePort FROM application/port/output/AIServicePort
+IMPORT Quiz FROM domain/model/Quiz
+IMPORT QuizNotFoundException FROM domain/exception/QuizNotFoundException
+IMPORT QuestionNotFoundException FROM domain/exception/QuestionNotFoundException
+
+CLASS EvaluateQuestionUseCase:
+    quizRepository: QuizRepositoryPort
+    lectureContentRepository: LectureContentRepositoryPort
+    aiService: AIServicePort
+
+    CONSTRUCTOR(quizRepository, lectureContentRepository, aiService)
+
+    METHOD execute(dto: EvaluateQuestionDto): Promise<Quiz>:
+        quiz = AWAIT quizRepository.findById(dto.quizId)
+        IF quiz IS NULL:
+            THROW NEW QuizNotFoundException(dto.quizId)
+            
+        question = quiz.questions.find(q => q.id == dto.questionId)
+        IF question IS NULL:
+            THROW NEW QuestionNotFoundException(dto.questionId)
+            
+        quiz.voteQuestion(dto.questionId, dto.type)
+        
+        savedQuiz = AWAIT quizRepository.save(quiz)
+        
+        IF quiz.isQuestionFaulty(dto.questionId) IS TRUE:
+            IF dto.apiKey IS NOT NULL:
+                // Kích hoạt tiến trình ngầm
+                CALL runBackgroundSelfHealing(savedQuiz, dto.questionId, dto.apiKey) WITHOUT AWAIT
+            ELSE:
+                LOG WARNING "Missing API Key for Self-Healing"
+                
+        RETURN savedQuiz
+
+    METHOD runBackgroundSelfHealing(quiz: Quiz, questionId: string, apiKey: string): Promise<void>:
+        lectureContent = AWAIT lectureContentRepository.findById(quiz.lectureContentId)
+        IF lectureContent IS NULL:
+            RETURN
+            
+        faultyQuestion = quiz.questions.find(q => q.id == questionId)
+        IF faultyQuestion IS NULL:
+            RETURN
+            
+        newQuestionData = AWAIT aiService.generateReplacementQuestion(lectureContent.refinedScript, faultyQuestion, apiKey)
+        
+        quiz.replaceQuestion(questionId, newQuestionData)
+        
+        AWAIT quizRepository.save(quiz)

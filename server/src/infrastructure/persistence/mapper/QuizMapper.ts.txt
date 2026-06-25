@@ -1,0 +1,65 @@
+CLASS QuizMapper:
+    STATIC METHOD toDomain(document): Quiz:
+        IF document is null:
+            THROW ERROR "Không thể map tài liệu null sang thực thể Quiz"
+        
+        domainQuestions = []
+        FOR EACH q in document.questions:
+            domainQuestions.push({
+                id: q.id,
+                text: q.text,
+                options: q.options,
+                correctOptionIndex: q.correctOptionIndex,
+                explanation: q.explanation,
+                metrics: {
+                    upvotes: q.metrics.upvotes OR 0,
+                    downvotes: q.metrics.downvotes OR 0,
+                    timesAnswered: q.metrics.timesAnswered OR 0,
+                    timesCorrect: q.metrics.timesCorrect OR 0
+                }
+            })
+
+        RETURN NEW Quiz(
+            document._id OR document.id,
+            document.lectureContentId,
+            document.creatorId,
+            document.youtubeId,
+            document.title,
+            document.description,
+            domainQuestions,
+            document.averageRating,
+            document.totalRatings,
+            document.createdAt,
+            document.updatedAt
+        )
+
+    STATIC METHOD toPersistence(domain: Quiz): any:
+        persistenceQuestions = []
+        FOR EACH q in domain.questions:
+            persistenceQuestions.push({
+                id: q.id,
+                text: q.text,
+                options: q.options,
+                correctOptionIndex: q.correctOptionIndex,
+                explanation: q.explanation,
+                metrics: {
+                    upvotes: q.metrics.upvotes,
+                    downvotes: q.metrics.downvotes,
+                    timesAnswered: q.metrics.timesAnswered,
+                    timesCorrect: q.metrics.timesCorrect
+                }
+            })
+
+        RETURN {
+            _id: domain.id,
+            lectureContentId: domain.lectureContentId,
+            creatorId: domain.creatorId,
+            youtubeId: domain.youtubeId,
+            title: domain.title,
+            description: domain.description,
+            questions: persistenceQuestions,
+            averageRating: domain.averageRating,
+            totalRatings: domain.totalRatings,
+            createdAt: domain.createdAt,
+            updatedAt: domain.updatedAt
+        }

@@ -1,0 +1,55 @@
+CLASS QuizController:
+    DEPENDENCY generateQuizUseCase: GenerateQuizUseCase
+    DEPENDENCY deleteQuizUseCase: DeleteQuizUseCase
+    DEPENDENCY evaluateQuestionUseCase: EvaluateQuestionUseCase
+    DEPENDENCY quizRepo: MongoQuizRepository
+
+SCHEMAS:
+    GetQuizByIdRequestSchema: { params.id: string (required) }
+    GenerateQuizRequestSchema: { body.url: string URL (required), body.creatorId: string (optional) }
+    DeleteQuizRequestSchema: { params.id: string (required), query.userId: string (optional) }
+    VoteQuestionRequestSchema: { params.id: string, params.questionId: string, body.type: 'up'|'down', body.userId: string (optional) }
+
+    CONSTRUCTOR():
+        quizRepo = NEW MongoQuizRepository()
+        lectureRepo = NEW MongoLectureContentRepository()
+        audioExtractor = NEW YtdlAudioExtractor()
+        aiService = NEW GeminiAIService()
+        this.quizRepo = quizRepo
+        generateQuizUseCase = NEW GenerateQuizUseCase(quizRepo, lectureRepo, audioExtractor, aiService)
+        deleteQuizUseCase = NEW DeleteQuizUseCase(quizRepo)
+        evaluateQuestionUseCase = NEW EvaluateQuestionUseCase(quizRepo, lectureRepo, aiService)
+
+    METHOD getQuizById(req, res, next):
+        TRY:
+            id = req.params.id
+            quiz = CALL quizRepo.findById(id)
+            IF quiz IS null:
+                THROW QuizNotFoundException(id)
+            RETURN res.status(200).json({ success: true, data: quiz })
+        CATCH error:
+            CALL next(error)
+
+    METHOD generateQuiz(req, res, next):
+        TRY:
+            apiKey = req.geminiKey
+            performance = req.headers["x-device-performance"] OR "low"
+            dto = {
+                url: req.body.url,
+                creatorId: req.body.creatorId OR "mock-creator-123",
+                apiKey: apiKey,
+                devicePerformance: performance
+            }
+            quiz = CALL generateQuizUseCase.execute(dto)
+            RETURN res.status(200).json({ success: true, data: quiz })
+        CATCH error:
+            CALL next(error)
+
+    METHOD deleteQuiz(req, res, next):
+        TRY:
+            quizId = req.params.id
+            userId = req.query.userId OR "mock-user-123"
+            CALL deleteQuizUseCase.execute({ quizId, userId })
+            RETURN res.status(200).json({ success: true, message: "Đã xóa bài trắc nghiệm thành công." })
+        CATCH error:
+            CALL next(error)

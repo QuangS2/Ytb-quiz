@@ -1,0 +1,4 @@
+INTERFACE LectureContentRepositoryPort:
+    METHOD save(lectureContent: LectureContent): Promise<LectureContent>
+    METHOD findById(id: string): Promise<LectureContent or null>
+    METHOD findByYoutubeId(youtubeId: string): Promise<LectureContent or null>

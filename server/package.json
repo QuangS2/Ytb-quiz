@@ -1,0 +1,31 @@
+{
+  "name": "ytb-quiz-server",
+  "version": "1.0.0",
+  "description": "Backend server for Ytb-quiz using Clean Architecture",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/presentation/app.ts"
+  },
+  "dependencies": {
+    "@distube/ytdl-core": "^4.15.8",
+    "@google/genai": "^2.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.1",
+    "youtubei.js": "github:LuanRT/YouTube.js",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.14.2",
+    "rimraf": "^5.0.7",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.5"
+  }
+}

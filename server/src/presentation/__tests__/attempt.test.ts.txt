@@ -1,0 +1,17 @@
+TEST_SUITE AttemptApiIntegrationTests:
+    SETUP ExpressTestServer:
+        - Register POST /api/quizzes/:id/attempts with Zod schema validation.
+        - Mock SubmitQuizUseCase execute logic.
+
+    TEST Case1_ZodValidationFailure:
+        - Send POST to /api/quizzes/quiz-123/attempts with empty answers and negative timeTaken.
+        - Verify status is 400 (VALIDATION_ERROR).
+
+    TEST Case2_QuizNotFound:
+        - Send POST to /api/quizzes/non-existent/attempts with valid payload.
+        - Verify status is 404 (QUIZ_NOT_FOUND).
+
+    TEST Case3_ValidSubmission:
+        - Send POST to /api/quizzes/quiz-123/attempts with valid answers list and timeTaken.
+        - Verify status is 201.
+        - Verify score is calculated and questions options, explanations are returned in response.

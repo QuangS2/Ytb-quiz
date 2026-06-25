@@ -1,0 +1,16 @@
+TEST_SUITE QuizApiIntegrationTests:
+    SETUP ExpressTestServer:
+        - Register POST /api/quizzes/generate with geminiKeyRequired and validateRequest.
+
+    TEST Case1_MissingGeminiKeyHeader:
+        - Send POST to /api/quizzes/generate without x-gemini-key.
+        - Verify status is 400 (INVALID_GEMINI_KEY).
+
+    TEST Case2_InvalidUrlFormat:
+        - Send POST to /api/quizzes/generate with invalid url.
+        - Verify status is 400 (VALIDATION_ERROR).
+
+    TEST Case3_ValidRequest:
+        - Send POST to /api/quizzes/generate with valid URL and key.
+        - Verify status is 200.
+        - Verify returned body contains success: true and the mock quiz data matches request.

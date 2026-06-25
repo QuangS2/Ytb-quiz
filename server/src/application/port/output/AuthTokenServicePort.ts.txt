@@ -1,0 +1,9 @@
+IMPORT User FROM domain/model/User
+
+INTERFACE TokenPayload:
+    userId: string
+    email: string
+
+INTERFACE AuthTokenServicePort:
+    METHOD generateToken(user: User): string
+    METHOD verifyToken(token: string): TokenPayload

@@ -1,0 +1,2 @@
+INTERFACE AudioExtractorPort:
+    METHOD extractAudio(youtubeId: string): Promise<ReadableStream>

@@ -1,0 +1,7 @@
+import { BusinessException } from './BusinessException';
+
+export class QuizForbiddenException extends BusinessException {
+  constructor(message: string = 'Bạn không có quyền thao tác trên bài trắc nghiệm này') {
+    super('QUIZ_FORBIDDEN', message);
+  }
+}

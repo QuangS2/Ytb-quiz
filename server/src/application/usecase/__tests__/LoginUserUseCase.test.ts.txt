@@ -1,0 +1,36 @@
+IMPORT assert FROM node:assert
+IMPORT LoginUserUseCase FROM application/usecase/LoginUserUseCase
+IMPORT UserRepositoryPort FROM application/port/output/UserRepositoryPort
+IMPORT OAuthServicePort FROM application/port/output/OAuthServicePort
+IMPORT AuthTokenServicePort FROM application/port/output/AuthTokenServicePort
+IMPORT User FROM domain/model/User
+
+CLASS MockUserRepository IMPLEMENTS UserRepositoryPort:
+    users: Array of User
+    METHOD save(user)
+    METHOD findById(id)
+    METHOD findByGoogleId(googleId)
+    METHOD findByEmail(email)
+
+CLASS MockOAuthService IMPLEMENTS OAuthServicePort:
+    mockUser: GoogleUserDto
+    METHOD verifyCode(code, redirectUri)
+
+CLASS MockAuthTokenService IMPLEMENTS AuthTokenServicePort:
+    METHOD generateToken(user)
+    METHOD verifyToken(token)
+
+FUNCTION runTests():
+    // Test Case 1: Đăng nhập lần đầu (User mới)
+    // - Thực thi LoginUserUseCase với code hợp lệ
+    // - Kiểm tra các giá trị trả về khớp với mockUser
+    // - Kiểm tra xem user đã được lưu vào UserRepository chưa
+
+    // Test Case 2: Đăng nhập lại (User cũ)
+    // - Thay đổi thông tin mockUser của OAuthService
+    // - Thực thi Use Case và kiểm tra xem ID được giữ nguyên
+    // - Kiểm tra xem thông tin email, displayName, avatarUrl trong database đã được cập nhật chưa
+
+    // Test Case 3: Lỗi mã code OAuth không hợp lệ
+    // - Thực thi Use Case với code "invalid-code"
+    // - Kiểm tra Use Case có throw exception đúng mong đợi

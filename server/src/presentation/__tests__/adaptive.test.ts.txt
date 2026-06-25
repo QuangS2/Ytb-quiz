@@ -1,0 +1,14 @@
+TEST_SUITE AdaptiveFlowIntegrationTests:
+    SETUP ExpressTestServer:
+        - Register POST /api/quizzes/generate with geminiKeyRequired and validateRequest.
+        - Mock GenerateQuizUseCase execute method to track background task trigger.
+
+    TEST Case1_LowPerformanceHeader:
+        - Send POST to /api/quizzes/generate with x-device-performance = "low".
+        - Verify status is 200.
+        - Verify background refinement was NOT triggered.
+
+    TEST Case2_HighPerformanceHeader:
+        - Send POST to /api/quizzes/generate with x-device-performance = "high".
+        - Verify status is 200.
+        - Verify background refinement WAS triggered.

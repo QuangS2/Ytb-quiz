@@ -1,0 +1,28 @@
+IMPORT Request, Response, NextFunction FROM express
+IMPORT z FROM zod
+IMPORT LoginUserUseCase FROM application/usecase/LoginUserUseCase
+
+SCHEMA LoginRequestSchema:
+    body:
+        code: string, required, min 1
+        redirectUri: string, optional, valid url
+
+CLASS AuthController:
+    loginUserUseCase: LoginUserUseCase
+
+    CONSTRUCTOR():
+        loginUserUseCase = NEW LoginUserUseCase(
+            NEW MongoUserRepository(),
+            NEW GoogleOAuthService(),
+            NEW JwtAuthTokenService()
+        )
+
+    METHOD loginGoogle(req: Request, res: Response, next: NextFunction): Promise<void>:
+        TRY:
+            code = req.body.code
+            redirectUri = req.body.redirectUri
+            result = AWAIT loginUserUseCase.execute(code, redirectUri)
+            
+            RETURN status 200 json success: true, data: result
+        CATCH(err):
+            next(err)

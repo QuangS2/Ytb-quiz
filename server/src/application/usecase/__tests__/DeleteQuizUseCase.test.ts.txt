@@ -1,0 +1,19 @@
+import assert from 'node:assert';
+import { DeleteQuizUseCase } from '../DeleteQuizUseCase';
+import { Quiz } from '../../../domain/model/Quiz';
+import { QuizNotFoundException } from '../../../domain/exception/QuizNotFoundException';
+import { QuizForbiddenException } from '../../../domain/exception/QuizForbiddenException';
+
+class MockQuizRepository
+  quizzes: Quiz[]
+
+  save(quiz)
+  findById(id)
+  findByYoutubeId(youtubeId)
+  delete(id)
+
+async function runTests()
+  // Setup mock quiz
+  // Case 1: Delete non-existent quiz -> assert QuizNotFoundException
+  // Case 2: Delete by non-owner -> assert QuizForbiddenException
+  // Case 3: Delete by owner -> assert quiz is deleted successfully

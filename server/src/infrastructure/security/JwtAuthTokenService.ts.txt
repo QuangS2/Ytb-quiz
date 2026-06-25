@@ -1,0 +1,21 @@
+IMPORT jwt FROM jsonwebtoken
+IMPORT AuthTokenServicePort, TokenPayload FROM application/port/output/AuthTokenServicePort
+IMPORT User FROM domain/model/User
+IMPORT AuthException FROM domain/exception/AuthException
+
+CLASS JwtAuthTokenService IMPLEMENTS AuthTokenServicePort:
+    secretKey: string
+
+    CONSTRUCTOR():
+        secretKey = env.JWT_SECRET OR default_key
+
+    METHOD generateToken(user: User): string:
+        payload = TokenPayload(userId = user.id, email = user.email)
+        RETURN jwt.sign(payload, secretKey, expiresIn = "7d")
+
+    METHOD verifyToken(token: string): TokenPayload:
+        TRY:
+            decoded = jwt.verify(token, secretKey)
+            RETURN TokenPayload(userId = decoded.userId, email = decoded.email)
+        CATCH:
+            THROW NEW AuthException("AUTH_UNAUTHORIZED", "...")

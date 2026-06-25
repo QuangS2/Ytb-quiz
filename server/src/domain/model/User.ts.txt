@@ -1,0 +1,25 @@
+CLASS User:
+    READONLY id: string
+    googleId: string
+    email: string
+    displayName: string
+    avatarUrl: string
+    passwordHash?: string
+    READONLY createdAt: Date
+
+    CONSTRUCTOR(
+        id: string,
+        googleId: string,
+        email: string,
+        displayName: string,
+        avatarUrl: string,
+        passwordHash: string or undefined,
+        createdAt: Date
+    )
+
+    METHOD setPassword(hash: string): void:
+        passwordHash = hash
+
+    METHOD hasPassword(): boolean:
+        return passwordHash !== undefined AND passwordHash !== null AND passwordHash !== ""
+

@@ -1,0 +1,41 @@
+CLASS GetUserStatsUseCase:
+    DEPENDENCY quizAttemptRepository: QuizAttemptRepositoryPort
+
+    CONSTRUCTOR(
+        quizAttemptRepository
+    )
+
+    METHOD execute(userId: string): Promise<UserStatsDto>:
+        # 1. Lấy toàn bộ lượt làm bài
+        attempts = CALL quizAttemptRepository.findByUserId(userId)
+
+        IF size of attempts == 0:
+            RETURN {
+                totalAttempts: 0,
+                totalQuizzes: 0,
+                averageCorrectRate: 0,
+                totalTimeTaken: 0
+            }
+
+        totalAttempts = size of attempts
+        totalTimeTaken = 0
+        totalQuestionsAnswered = 0
+        totalCorrectAnswers = 0
+        uniqueQuizIds = NEW Set()
+
+        FOR EACH att in attempts:
+            totalTimeTaken = totalTimeTaken + att.timeTaken
+            totalQuestionsAnswered = totalQuestionsAnswered + att.totalQuestions
+            totalCorrectAnswers = totalCorrectAnswers + att.score
+            ADD att.quizId to uniqueQuizIds
+
+        averageCorrectRate = 0
+        IF totalQuestionsAnswered > 0:
+            averageCorrectRate = (totalCorrectAnswers / totalQuestionsAnswered) * 100
+
+        RETURN {
+            totalAttempts: totalAttempts,
+            totalQuizzes: size of uniqueQuizIds,
+            averageCorrectRate: averageCorrectRate,
+            totalTimeTaken: totalTimeTaken
+        }

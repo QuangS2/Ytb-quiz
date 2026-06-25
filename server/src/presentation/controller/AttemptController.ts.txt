@@ -1,0 +1,28 @@
+CLASS AttemptController:
+    DEPENDENCY submitQuizUseCase: SubmitQuizUseCase
+
+    CONSTRUCTOR():
+        quizRepo = NEW MongoQuizRepository()
+        attemptRepo = NEW MongoQuizAttemptRepository()
+        submitQuizUseCase = NEW SubmitQuizUseCase(quizRepo, attemptRepo)
+
+    METHOD submitAttempt(req, res, next):
+        TRY:
+            quizId = req.params.id
+            answers = req.body.answers
+            timeTaken = req.body.timeTaken
+            mode = req.body.mode OR "full-test"
+            userId = req.body.userId OR "mock-user-123"
+
+            dto = {
+                quizId: quizId,
+                userId: userId,
+                answers: answers,
+                timeTaken: timeTaken,
+                mode: mode
+            }
+
+            result = CALL submitQuizUseCase.execute(dto)
+            RETURN res.status(201).json({ success: true, data: result })
+        CATCH error:
+            CALL next(error)

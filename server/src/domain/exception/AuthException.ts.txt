@@ -1,0 +1,3 @@
+CLASS AuthException EXTENDS BusinessException:
+    CONSTRUCTOR(code: string, message: string):
+        SUPER(code, message)

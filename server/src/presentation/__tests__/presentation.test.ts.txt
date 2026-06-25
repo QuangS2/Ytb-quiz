@@ -1,0 +1,22 @@
+TEST_SUITE PresentationLayerMiddlewareTests:
+    SETUP ExpressTestServer:
+        - Register test routes for business exception, Zod validation, and system error.
+        - Register global errorHandler.
+
+    TEST Case1_BusinessExceptionHandler:
+        - Send GET request to /test-business-error.
+        - Verify status code is 400.
+        - Verify body contains success: false and code: TEST_BUSINESS_CODE.
+
+    TEST Case2_RequestValidation:
+        - Send POST request to /test-validation with invalid fields.
+        - Verify status code is 400.
+        - Verify body contains success: false and code: VALIDATION_ERROR.
+        - Send POST request to /test-validation with valid fields.
+        - Verify status code is 200.
+        - Verify body contains success: true and mapped payload.
+
+    TEST Case3_SystemErrorHandler:
+        - Send GET request to /test-system-error.
+        - Verify status code is 500.
+        - Verify body contains success: false and code: INTERNAL_SERVER_ERROR.

@@ -1,0 +1,24 @@
+CLASS UserController:
+    DEPENDENCY getUserAttemptsUseCase: GetUserAttemptsUseCase
+    DEPENDENCY getUserStatsUseCase: GetUserStatsUseCase
+
+    CONSTRUCTOR():
+        attemptRepo = NEW MongoQuizAttemptRepository()
+        quizRepo = NEW MongoQuizRepository()
+        getUserAttemptsUseCase = NEW GetUserAttemptsUseCase(attemptRepo, quizRepo)
+        getUserStatsUseCase = NEW GetUserStatsUseCase(attemptRepo)
+
+    METHOD getHistory(req, res, next):
+        TRY:
+            userId = req.query.userId OR "mock-user-123"
+            attempts = CALL getUserAttemptsUseCase.execute(userId)
+            stats = CALL getUserStatsUseCase.execute(userId)
+            RETURN res.status(200).json({
+                success: true,
+                data: {
+                    attempts: attempts,
+                    stats: stats
+                }
+            })
+        CATCH error:
+            CALL next(error)

@@ -1,0 +1,83 @@
+CLASS SubmitQuizUseCase:
+    DEPENDENCY quizRepository: QuizRepositoryPort
+    DEPENDENCY quizAttemptRepository: QuizAttemptRepositoryPort
+    DEPENDENCY lectureContentRepository?: LectureContentRepositoryPort
+    DEPENDENCY aiService?: AIServicePort
+
+    CONSTRUCTOR(
+        quizRepository,
+        quizAttemptRepository,
+        lectureContentRepository,
+        aiService
+    )
+
+    METHOD execute(dto: SubmitQuizRequestDto): Promise<SubmitQuizResult>:
+        # 1. Tìm Quiz theo id
+        quiz = CALL quizRepository.findById(dto.quizId)
+        IF quiz is null:
+            THROW NEW QuizNotFoundException(dto.quizId)
+
+        # 2. Đánh giá câu trả lời của người dùng và cập nhật metrics trong Quiz
+        evaluatedAnswers = []
+        FOR EACH ans in dto.answers:
+            # Tìm câu hỏi tương ứng trong Quiz
+            question = FIND q in quiz.questions WHERE q.id == ans.questionId
+            IF question is null:
+                # Bỏ qua hoặc ném lỗi nếu câu hỏi không thuộc Quiz này
+                THROW NEW BusinessException("QUESTION_NOT_FOUND", "Không tìm thấy câu hỏi với ID " + ans.questionId + " trong bài thi này.")
+            
+            isCorrect = (ans.selectedOptionIndex == question.correctOptionIndex)
+            
+            # Cập nhật số liệu thống kê cho câu hỏi này
+            CALL quiz.answerQuestion(question.id, isCorrect)
+
+            evaluatedAnswers.push({
+                questionId: ans.questionId,
+                selectedOptionIndex: ans.selectedOptionIndex,
+                isCorrect: isCorrect
+            })
+
+        # 3. Tạo thực thể QuizAttempt
+        attemptId = generateRandomId()
+        attempt = NEW QuizAttempt(
+            attemptId,
+            dto.userId,
+            dto.quizId,
+            dto.mode OR "full-test",
+            0, # Điểm số ban đầu
+            quiz.getQuestionCount(),
+            dto.timeTaken,
+            evaluatedAnswers,
+            currentDateTime()
+        )
+
+        # 4. Chấm điểm
+        CALL attempt.calculateScore()
+
+        # 5. Lưu thông tin lượt làm bài
+        savedAttempt = CALL quizAttemptRepository.save(attempt)
+
+        # 6. Lưu thông tin Quiz (đã được cập nhật metrics của câu hỏi)
+        savedQuiz = CALL quizRepository.save(quiz)
+
+        # 7. Kích hoạt tự phục hồi nếu câu hỏi bị lỗi và có API Key
+        IF dto.apiKey IS NOT NULL AND lectureContentRepository IS NOT NULL AND aiService IS NOT NULL:
+            FOR EACH ans in dto.answers:
+                IF quiz.isQuestionFaulty(ans.questionId) IS TRUE:
+                    CALL runBackgroundSelfHealing(savedQuiz, ans.questionId, dto.apiKey) WITHOUT AWAIT
+
+        RETURN {
+            attempt: savedAttempt,
+            questions: quiz.questions
+        }
+
+    METHOD runBackgroundSelfHealing(quiz: Quiz, questionId: string, apiKey: string): Promise<void>:
+        lectureContent = AWAIT lectureContentRepository.findById(quiz.lectureContentId)
+        IF lectureContent IS NULL: RETURN
+        
+        faultyQuestion = quiz.questions.find(q => q.id == questionId)
+        IF faultyQuestion IS NULL: RETURN
+        
+        newQuestionData = AWAIT aiService.generateReplacementQuestion(lectureContent.refinedScript, faultyQuestion, apiKey)
+        quiz.replaceQuestion(questionId, newQuestionData)
+        AWAIT quizRepository.save(quiz)

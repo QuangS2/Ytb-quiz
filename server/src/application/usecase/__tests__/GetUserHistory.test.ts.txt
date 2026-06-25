@@ -1,0 +1,22 @@
+TEST_SUITE GetUserHistoryUseCaseTests:
+    DEPENDENCY MockQuizAttemptRepository
+    DEPENDENCY MockQuizRepository
+
+    SUB_SUITE GetUserAttemptsUseCase:
+        TEST Case1_EmptyAttempts:
+            - Call execute with a userId that has no attempts.
+            - Verify it returns an empty list.
+        TEST Case2_ListAttemptsWithQuizTitles:
+            - Save mock quizzes and attempts in Repository.
+            - Call execute.
+            - Verify attempts are returned, sorted newest first.
+            - Verify each attempt contains the correct quizTitle.
+
+    SUB_SUITE GetUserStatsUseCase:
+        TEST Case1_EmptyStats:
+            - Call execute for user with no attempts.
+            - Verify all stats are 0.
+        TEST Case2_CalculatesCorrectStats:
+            - Save attempts for a user with varying scores, timeTaken, and quizIds.
+            - Call execute.
+            - Verify totalAttempts, totalQuizzes, totalTimeTaken, and averageCorrectRate are computed correctly.

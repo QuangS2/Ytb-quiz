@@ -1,0 +1,15 @@
+TEST_SUITE HistoryApiIntegrationTests:
+    SETUP ExpressTestServer:
+        - Register GET /api/users/history endpoint.
+        - Mock GetUserAttemptsUseCase and GetUserStatsUseCase execute methods.
+
+    TEST Case1_RetrieveHistorySuccess:
+        - Send GET request to /api/users/history?userId=user-abc.
+        - Verify status is 200.
+        - Verify returned body contains success: true.
+        - Verify data attempts matches mock list and stats contains correct counts.
+
+    TEST Case2_RetrieveHistoryDefaultUser:
+        - Send GET request to /api/users/history (without userId query param).
+        - Verify status is 200.
+        - Verify use cases are called with default "mock-user-123" userId.

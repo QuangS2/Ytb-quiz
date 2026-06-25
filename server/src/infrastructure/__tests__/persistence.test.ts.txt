@@ -1,0 +1,29 @@
+TEST_SUITE PersistenceLayerIntegrationTests:
+    SETUP DatabaseConnection:
+        - Attempt connection to MongoDB.
+        - Exit cleanly with warning if MongoDB is offline.
+        - Drop test database before running.
+
+    TEST Case1_MongoUserRepository:
+        - Save a new User entity.
+        - Verify user id, displayName, and default credentials.
+        - Retrieve user by id, googleId, and email.
+        - Modify user (setPassword) and save to verify updates.
+
+    TEST Case2_MongoLectureContentRepository:
+        - Save a new LectureContent entity.
+        - Verify lecture content is saved.
+        - Retrieve lecture content by youtubeId.
+
+    TEST Case3_MongoQuizRepository:
+        - Save a new Quiz entity containing question options and metrics.
+        - Verify quiz questions and metrics match persisted representation.
+        - Retrieve quiz by youtubeId.
+
+    TEST Case4_MongoQuizAttemptRepository:
+        - Save a new QuizAttempt entity.
+        - Verify attempt fields like score, userId, and correct options list.
+        - Retrieve attempts by userId.
+
+    CLEANUP:
+        - Drop test database and disconnect.

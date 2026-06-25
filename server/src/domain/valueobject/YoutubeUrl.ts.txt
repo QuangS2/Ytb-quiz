@@ -1,0 +1,23 @@
+CLASS YoutubeUrl:
+    READONLY value: string
+    READONLY youtubeId: string
+
+    CONSTRUCTOR(url: string):
+        IF url is empty or null:
+            THROW InvalidYoutubeUrlException(url)
+        
+        youtubeId = extractId(url)
+        IF youtubeId is null or length is not 11:
+            THROW InvalidYoutubeUrlException(url)
+            
+        value = url
+
+    PRIVATE extractId(url: string): string or null:
+        match = url.match(REGEX_YOUTUBE)
+        return match ? match[1] : null
+
+    METHOD equals(other: YoutubeUrl): boolean:
+        return this.youtubeId === other.youtubeId
+
+    METHOD getCleanUrl(): string:
+        return "https://www.youtube.com/watch?v=" + this.youtubeId

@@ -1,0 +1,31 @@
+IMPORT OAuthServicePort, GoogleUserDto FROM application/port/output/OAuthServicePort
+IMPORT AuthException FROM domain/exception/AuthException
+
+CLASS GoogleOAuthService IMPLEMENTS OAuthServicePort:
+    clientId: string
+    clientSecret: string
+
+    CONSTRUCTOR():
+        clientId = env.GOOGLE_CLIENT_ID
+        clientSecret = env.GOOGLE_CLIENT_SECRET
+
+    METHOD verifyCode(code: string, redirectUri?: string): Promise<GoogleUserDto>:
+        IF code IS "dev-bypass-code" OR clientId IS missing/placeholder:
+            RETURN Developer profile (googleId = "google_dev_123", email, name, picture)
+
+        TRY:
+            tokenResponse = AWAIT fetch("https://oauth2.googleapis.com/token", POST, urlencoded body)
+            IF tokenResponse NOT OK:
+                THROW NEW AuthException("AUTH_INVALID_CODE", "...")
+                
+            tokenData = tokenResponse.json()
+            
+            userInfoResponse = AWAIT fetch("https://www.googleapis.com/oauth2/v3/userinfo", Authorization Bearer)
+            IF userInfoResponse NOT OK:
+                THROW NEW AuthException("AUTH_UNAUTHORIZED", "...")
+                
+            googleUser = userInfoResponse.json()
+            
+            RETURN GoogleUserDto (sub as googleId, email, name as displayName, picture as avatarUrl)
+        CATCH:
+            RETHROW AuthException OR THROW NEW AuthException

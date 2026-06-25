@@ -1,0 +1,45 @@
+CLASS QuizAttemptMapper:
+    STATIC METHOD toDomain(document): QuizAttempt:
+        IF document is null:
+            THROW ERROR "Không thể map tài liệu null sang thực thể QuizAttempt"
+
+        domainAnswers = []
+        FOR EACH ans in document.answers:
+            domainAnswers.push({
+                questionId: ans.questionId,
+                selectedOptionIndex: ans.selectedOptionIndex,
+                isCorrect: ans.isCorrect
+            })
+
+        RETURN NEW QuizAttempt(
+            document._id OR document.id,
+            document.userId,
+            document.quizId,
+            document.mode,
+            document.score,
+            document.totalQuestions,
+            document.timeTaken,
+            domainAnswers,
+            document.attemptedAt
+        )
+
+    STATIC METHOD toPersistence(domain: QuizAttempt): any:
+        persistenceAnswers = []
+        FOR EACH ans in domain.answers:
+            persistenceAnswers.push({
+                questionId: ans.questionId,
+                selectedOptionIndex: ans.selectedOptionIndex,
+                isCorrect: ans.isCorrect
+            })
+
+        RETURN {
+            _id: domain.id,
+            userId: domain.userId,
+            quizId: domain.quizId,
+            mode: domain.mode,
+            score: domain.score,
+            totalQuestions: domain.totalQuestions,
+            timeTaken: domain.timeTaken,
+            answers: persistenceAnswers,
+            attemptedAt: domain.attemptedAt
+        }

@@ -1,0 +1,5 @@
+INTERFACE QuizRepositoryPort:
+    METHOD save(quiz: Quiz): Promise<Quiz>
+    METHOD findById(id: string): Promise<Quiz or null>
+    METHOD findByYoutubeId(youtubeId: string): Promise<Quiz or null>
+    METHOD delete(id: string): Promise<void>

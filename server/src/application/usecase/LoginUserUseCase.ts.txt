@@ -1,0 +1,48 @@
+IMPORT randomUUID FROM crypto
+IMPORT UserRepositoryPort FROM application/port/output/UserRepositoryPort
+IMPORT OAuthServicePort FROM application/port/output/OAuthServicePort
+IMPORT AuthTokenServicePort FROM application/port/output/AuthTokenServicePort
+IMPORT LoginRequestDto FROM application/dto/LoginRequestDto
+IMPORT LoginResponseDto FROM application/dto/LoginResponseDto
+IMPORT User FROM domain/model/User
+
+CLASS LoginUserUseCase:
+    userRepository: UserRepositoryPort
+    oauthService: OAuthServicePort
+    authTokenService: AuthTokenServicePort
+
+    CONSTRUCTOR(userRepository, oauthService, authTokenService)
+
+    METHOD execute(dto: LoginRequestDto): Promise<LoginResponseDto>:
+        googleUser = AWAIT oauthService.verifyCode(dto.code, dto.redirectUri)
+        
+        user = AWAIT userRepository.findByGoogleId(googleUser.googleId)
+        
+        IF user IS NOT NULL:
+            hasChanges = FALSE
+            IF user.displayName != googleUser.displayName:
+                user.displayName = googleUser.displayName
+                hasChanges = TRUE
+            IF user.avatarUrl != googleUser.avatarUrl:
+                user.avatarUrl = googleUser.avatarUrl
+                hasChanges = TRUE
+            IF user.email != googleUser.email:
+                user.email = googleUser.email
+                hasChanges = TRUE
+                
+            IF hasChanges IS TRUE:
+                user = AWAIT userRepository.save(user)
+        ELSE:
+            newUserId = randomUUID()
+            user = NEW User(
+                newUserId,
+                googleUser.googleId,
+                googleUser.email,
+                googleUser.displayName,
+                googleUser.avatarUrl
+            )
+            user = AWAIT userRepository.save(user)
+            
+        token = authTokenService.generateToken(user)
+        
+        RETURN DTO matching LoginResponseDto (token, user details)

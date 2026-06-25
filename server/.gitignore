@@ -1,0 +1,74 @@
+# =========================================================================
+# Work Process & Documentation Files
+# =========================================================================
+# Ignore work-process/temporary markdown files, task lists, and plan files
+*.md
+!README.md
+!**/README.md
+!CHANGELOG.md
+!**/CHANGELOG.md
+!CONTRIBUTING.md
+!**/CONTRIBUTING.md
+
+# Also ignore specific directories used for documentation/notes/guides
+guide/
+mindmap/
+docs/
+*.txt
+# Keep backend pseudocode specs tracked in git
+!*.ts.txt
+
+# =========================================================================
+# Node & TypeScript (Backend Server)
+# =========================================================================
+# Ignore dependency directories
+node_modules/
+
+# Ignore build outputs
+dist/
+
+# Ignore environment variables and local configs
+.env
+.env.local
+.env.*.local
+
+# =========================================================================
+# IDEs, Editors & System Files
+# =========================================================================
+# JetBrains (IntelliJ, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+
+# Visual Studio Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*

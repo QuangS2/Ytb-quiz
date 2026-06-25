@@ -1,0 +1,17 @@
+import assert from 'node:assert';
+import { QuizController } from '../controller/QuizController';
+import { DeleteQuizUseCase } from '../../application/usecase/DeleteQuizUseCase';
+
+let useCaseMockBehavior = 'success'
+let capturedQuizId = ''
+let capturedUserId = ''
+
+// Monkey-patch DeleteQuizUseCase.execute
+DeleteQuizUseCase.prototype.execute = async (dto) => { ... }
+
+async function runTests()
+  // Start test server
+  // Case 1: Send DELETE /api/quizzes/quiz-not-exist -> assert status 404 & code QUIZ_NOT_FOUND
+  // Case 2: Send DELETE /api/quizzes/quiz-123 with attacker -> assert status 403 & code QUIZ_FORBIDDEN
+  // Case 3: Send DELETE /api/quizzes/quiz-123 with owner -> assert status 200 & success true
+  // Case 4: Send DELETE /api/quizzes/quiz-123 with empty userId -> assert capturedUserId is "mock-user-123"

@@ -1,0 +1,36 @@
+CLASS GetUserAttemptsUseCase:
+    DEPENDENCY quizAttemptRepository: QuizAttemptRepositoryPort
+    DEPENDENCY quizRepository: QuizRepositoryPort
+
+    CONSTRUCTOR(
+        quizAttemptRepository,
+        quizRepository
+    )
+
+    METHOD execute(userId: string): Promise<UserHistoryAttemptDto[]>:
+        # 1. Lấy tất cả lượt làm bài của User
+        attempts = CALL quizAttemptRepository.findByUserId(userId)
+
+        # 2. Sắp xếp lượt làm bài mới nhất lên trước
+        SORT attempts DESC BY attemptedAt
+
+        result = []
+        FOR EACH att in attempts:
+            # 3. Lấy tên bài trắc nghiệm (quizTitle)
+            quiz = CALL quizRepository.findById(att.quizId)
+            quizTitle = "Bài trắc nghiệm đã xóa"
+            IF quiz is not null:
+                quizTitle = quiz.title
+
+            result.push({
+                id: att.id,
+                quizId: att.quizId,
+                quizTitle: quizTitle,
+                mode: att.mode,
+                score: att.score,
+                totalQuestions: att.totalQuestions,
+                timeTaken: att.timeTaken,
+                attemptedAt: att.attemptedAt
+            })
+
+        RETURN result

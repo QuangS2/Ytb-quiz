@@ -1,0 +1,28 @@
+TEST_SUITE ConfigKeyValidationTests:
+    DEPENDENCY MockAIService
+
+    SUB_SUITE UnitTests_ValidateApiKeyUseCase:
+        TEST CaseA_EmptyKey:
+            - Call execute with empty apiKey string.
+            - Verify it throws InvalidGeminiApiKeyException.
+        TEST CaseB_InvalidKey:
+            - Mock AIService validation as failed.
+            - Call execute.
+            - Verify it throws InvalidGeminiApiKeyException.
+        TEST CaseC_ValidKey:
+            - Mock AIService validation as successful.
+            - Call execute.
+            - Verify it returns true.
+
+    SUB_SUITE IntegrationTests_ValidateKeyEndpoint:
+        SETUP ExpressTestServer:
+            - Register POST /api/config/validate-key.
+        TEST CaseA_MissingHeader:
+            - Call endpoint without x-gemini-key.
+            - Verify status code is 400 (MISSING_GEMINI_KEY).
+        TEST CaseB_WrongKey:
+            - Call endpoint with invalid x-gemini-key.
+            - Verify status code is 400 (INVALID_GEMINI_KEY).
+        TEST CaseC_ValidKey:
+            - Call endpoint with valid x-gemini-key.
+            - Verify status code is 200 (success: true).

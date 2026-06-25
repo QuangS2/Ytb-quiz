@@ -1,0 +1,26 @@
+CLASS LectureContentMapper:
+    STATIC METHOD toDomain(document): LectureContent:
+        IF document is null:
+            THROW ERROR "Không thể map tài liệu null sang thực thể LectureContent"
+        RETURN NEW LectureContent(
+            document._id OR document.id,
+            document.youtubeId,
+            document.title,
+            document.refinedScript,
+            document.version,
+            document.qualityScore,
+            document.createdAt,
+            document.updatedAt
+        )
+
+    STATIC METHOD toPersistence(domain: LectureContent): any:
+        RETURN {
+            _id: domain.id,
+            youtubeId: domain.youtubeId,
+            title: domain.title,
+            refinedScript: domain.refinedScript,
+            version: domain.version,
+            qualityScore: domain.qualityScore,
+            createdAt: domain.createdAt,
+            updatedAt: domain.updatedAt
+        }

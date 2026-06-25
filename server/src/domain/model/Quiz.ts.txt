@@ -1,0 +1,87 @@
+INTERFACE QuestionMetrics:
+    upvotes: number
+    downvotes: number
+    timesAnswered: number
+    timesCorrect: number
+
+INTERFACE Question:
+    id: string
+    text: string
+    options: array of string
+    correctOptionIndex: number
+    explanation: string
+    metrics: QuestionMetrics
+
+CLASS Quiz:
+    READONLY id: string
+    lectureContentId: string
+    creatorId: string
+    youtubeId: string
+    title: string
+    description: string
+    questions: array of Question
+    averageRating: number
+    totalRatings: number
+    READONLY createdAt: Date
+    updatedAt: Date
+
+    CONSTRUCTOR(
+        id: string,
+        lectureContentId: string,
+        creatorId: string,
+        youtubeId: string,
+        title: string,
+        description: string,
+        questions: array of Question,
+        averageRating: number,
+        totalRatings: number,
+        createdAt: Date,
+        updatedAt: Date
+    )
+
+    METHOD getQuestionCount(): number:
+        return questions.length
+
+    METHOD voteQuestion(questionId: string, type: "up" | "down"): void:
+        question = find question in questions by questionId
+        IF question exists:
+            IF type === "up":
+                question.metrics.upvotes++
+            ELSE:
+                question.metrics.downvotes++
+            updatedAt = CURRENT_DATE
+
+    METHOD answerQuestion(questionId: string, isCorrect: boolean): void:
+        question = find question in questions by questionId
+        IF question exists:
+            question.metrics.timesAnswered++
+            IF isCorrect:
+                question.metrics.timesCorrect++
+            updatedAt = CURRENT_DATE
+
+    METHOD isQuestionFaulty(questionId: string): boolean:
+        question = find question in questions by questionId
+        IF question not exists:
+            return false
+        
+        metrics = question.metrics
+        totalVotes = metrics.upvotes + metrics.downvotes
+        hasTooManyDownvotes = totalVotes > 0 AND (metrics.downvotes / totalVotes) > 0.3
+        hasZeroCorrect = metrics.timesAnswered >= 20 AND metrics.timesCorrect === 0
+
+        return hasTooManyDownvotes OR hasZeroCorrect
+
+    METHOD replaceQuestion(questionId: string, newQuestionData: Omit<Question, "metrics">): void:
+        idx = find index of question in questions by questionId
+        IF idx !== -1:
+            questions[idx] = {
+                ...newQuestionData,
+                metrics: { upvotes: 0, downvotes: 0, timesAnswered: 0, timesCorrect: 0 }
+            }
+            updatedAt = CURRENT_DATE
+
+    METHOD hasFaultyQuestions(): boolean:
+        FOR EACH q in questions:
+            IF isQuestionFaulty(q.id):
+                RETURN true
+        RETURN false

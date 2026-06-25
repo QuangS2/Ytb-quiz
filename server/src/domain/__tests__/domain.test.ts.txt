@@ -1,0 +1,24 @@
+TEST_SUITE DomainLayerTests:
+    TEST YoutubeUrlValueObject:
+        - Verify valid YouTube links successfully extract ID.
+        - Verify invalid YouTube links throw InvalidYoutubeUrlException.
+        - Verify equals method handles matching IDs.
+        - Verify getCleanUrl normalizes URLs.
+
+    TEST UserHybridLogin:
+        - Verify default user has no password hash.
+        - Verify setPassword sets password hash and triggers hasPassword.
+
+    TEST LectureContentEntity:
+        - Verify LectureContent stores metadata.
+        - Verify updateScript mutates script, version, and quality score.
+
+    TEST QuizAndSelfHealingLogic:
+        - Verify quiz gets questions count.
+        - Verify upvote/downvote and answer metrics update correctly.
+        - Verify self-healing trigger: downvotes > 30% flags question as faulty.
+        - Verify self-healing trigger: 20 failed responses (0% correct) flags question as faulty.
+        - Verify replaceQuestion replaces faulty question data and resets metrics.
+
+    TEST QuizAttemptEntity:
+        - Verify calculateScore scores attempts based on correctness of answers.

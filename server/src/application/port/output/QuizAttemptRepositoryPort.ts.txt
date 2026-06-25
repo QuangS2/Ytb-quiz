@@ -1,0 +1,5 @@
+INTERFACE QuizAttemptRepositoryPort:
+    METHOD save(attempt: QuizAttempt): Promise<QuizAttempt>
+    METHOD findById(id: string): Promise<QuizAttempt or null>
+    METHOD findByUserId(userId: string): Promise<array of QuizAttempt>
+    METHOD findByQuizId(quizId: string): Promise<array of QuizAttempt>

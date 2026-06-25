@@ -1,0 +1,8 @@
+INTERFACE GoogleUserDto:
+    googleId: string
+    email: string
+    displayName: string
+    avatarUrl: string
+
+INTERFACE OAuthServicePort:
+    METHOD verifyCode(code: string, redirectUri?: string): Promise<GoogleUserDto>

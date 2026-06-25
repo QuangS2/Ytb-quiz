@@ -1,0 +1,14 @@
+CLASS ConfigController:
+    DEPENDENCY validateApiKeyUseCase: ValidateApiKeyUseCase
+
+    CONSTRUCTOR():
+        geminiService = NEW GeminiAIService()
+        validateApiKeyUseCase = NEW ValidateApiKeyUseCase(geminiService)
+
+    METHOD validateKey(req, res, next):
+        TRY:
+            key = req.geminiKey
+            CALL validateApiKeyUseCase.execute(key)
+            RETURN res.json({ success: true, message: "Khóa API Gemini hoạt động tốt." })
+        CATCH error:
+            CALL next(error)

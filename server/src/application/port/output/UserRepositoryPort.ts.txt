@@ -1,0 +1,5 @@
+INTERFACE UserRepositoryPort:
+    METHOD save(user: User): Promise<User>
+    METHOD findById(id: string): Promise<User or null>
+    METHOD findByGoogleId(googleId: string): Promise<User or null>
+    METHOD findByEmail(email: string): Promise<User or null>
