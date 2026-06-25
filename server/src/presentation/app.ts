@@ -125,6 +125,28 @@ mongoose
   .connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB successfully.');
+    
+    // Log chẩn đoán môi trường yt-dlp
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const distPath = path.join(process.cwd(), 'dist');
+      const binaryPath = path.join(distPath, 'yt-dlp');
+      console.log(`[Diagnostic] process.cwd(): ${process.cwd()}`);
+      console.log(`[Diagnostic] dist folder exists: ${fs.existsSync(distPath)}`);
+      if (fs.existsSync(distPath)) {
+        console.log(`[Diagnostic] dist files: ${fs.readdirSync(distPath).join(', ')}`);
+      }
+      console.log(`[Diagnostic] binaryPath exists: ${fs.existsSync(binaryPath)}`);
+      if (fs.existsSync(binaryPath)) {
+        const stats = fs.statSync(binaryPath);
+        console.log(`[Diagnostic] binaryPath size: ${stats.size} bytes`);
+        console.log(`[Diagnostic] binaryPath mode: ${stats.mode}`);
+      }
+    } catch (diagErr: any) {
+      console.error('[Diagnostic] Error during environment check:', diagErr.message);
+    }
+
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
