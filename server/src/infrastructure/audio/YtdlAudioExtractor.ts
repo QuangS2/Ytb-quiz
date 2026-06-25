@@ -2,8 +2,6 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { Readable, PassThrough } from 'stream';
-import play from 'play-dl';
-import { Innertube, UniversalCache } from 'youtubei.js';
 import { AudioExtractorPort } from '../../application/port/output/AudioExtractorPort';
 import { AudioExtractionException } from '../../domain/exception/AudioExtractionException';
 
@@ -117,12 +115,13 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
       console.warn(`[YtdlAudioExtractor] yt-dlp thất bại: ${ytdlErr.message}. Thử fallback sang play-dl...`);
     }
 
-    // Thử 2: Fallback sang play-dl
+    // Thử 2: Fallback sang play-dl (Dynamic import để tránh crash khi khởi động)
     try {
       console.log(`[YtdlAudioExtractor] Thử tải bằng play-dl cho ID: ${youtubeId}`);
+      const play = require('play-dl');
       const playStream = await play.stream(cleanUrl, { quality: 2, discordPlayerCompatibility: true });
       
-      playStream.stream.on('error', (err) => {
+      playStream.stream.on('error', (err: any) => {
         console.error('[YtdlAudioExtractor - play-dl stream error]:', err.message);
       });
 
@@ -132,9 +131,10 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
       console.warn(`[YtdlAudioExtractor] play-dl thất bại: ${playErr.message}. Thử fallback sang youtubei.js...`);
     }
 
-    // Thử 3: Fallback sang youtubei.js
+    // Thử 3: Fallback sang youtubei.js (Dynamic import để tránh crash khi khởi động)
     try {
       console.log(`[YtdlAudioExtractor] Thử tải bằng youtubei.js cho ID: ${youtubeId}`);
+      const { Innertube, UniversalCache } = require('youtubei.js');
       const yt = await Innertube.create({ cache: new UniversalCache(false) });
       const ytStream = await yt.download(youtubeId, {
         type: 'audio',
@@ -143,7 +143,7 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
       });
 
       const nodeStream = Readable.from(ytStream as any);
-      nodeStream.on('error', (err) => {
+      nodeStream.on('error', (err: any) => {
         console.error('[YtdlAudioExtractor - youtubei stream error]:', err.message);
       });
 
