@@ -1,0 +1,5 @@
+[providers]
+  node = true
+
+[phases.setup]
+  nixPkgs = ["...", "yt-dlp", "ffmpeg"]
