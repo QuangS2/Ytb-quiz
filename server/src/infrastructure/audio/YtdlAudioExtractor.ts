@@ -34,7 +34,7 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
           '-f', 'bestaudio',
           '-o', '-',
           '--no-playlist',
-          '--extractor-args', 'youtube:player-client=ios',
+          '--extractor-args', 'youtube:player-client=web_embedded,android,mweb',
           cleanUrl
         ]);
 
