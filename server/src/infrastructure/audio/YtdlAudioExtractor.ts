@@ -11,6 +11,13 @@ export class YtdlAudioExtractor implements AudioExtractorPort {
     if (isWindows) {
       return { command: 'python', baseArgs: ['-m', 'yt_dlp'] };
     }
+
+    // Trên Linux/macOS, ưu tiên sử dụng standalone binary cục bộ
+    const localYtdlp = path.join(process.cwd(), 'yt-dlp');
+    if (fs.existsSync(localYtdlp)) {
+      return { command: localYtdlp, baseArgs: [] };
+    }
+
     return { command: 'python3', baseArgs: ['-m', 'yt_dlp'] };
   }
 

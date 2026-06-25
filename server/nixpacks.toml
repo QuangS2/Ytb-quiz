@@ -2,7 +2,11 @@
   node = true
 
 [phases.setup]
-  nixPkgs = ["ffmpeg", "python3", "python311Packages.pip"]
+  nixPkgs = ["ffmpeg"]
+
+[phases.build]
   cmds = [
-    "pip install -U --pre yt-dlp"
+    "npm run build",
+    "curl -L https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp -o yt-dlp",
+    "chmod +x yt-dlp"
   ]

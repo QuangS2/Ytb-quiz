@@ -9,13 +9,14 @@
     "dev": "ts-node-dev --respawn --transpile-only src/presentation/app.ts"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.15.8",
+    "@distube/ytdl-core": "^4.16.12",
     "@google/genai": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.1",
+    "play-dl": "^1.9.7",
     "youtubei.js": "github:LuanRT/YouTube.js",
     "zod": "^3.23.8"
   },
