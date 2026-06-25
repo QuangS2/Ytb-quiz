@@ -44,6 +44,8 @@ export const errorHandler = (
   return res.status(500).json({
     success: false,
     code: 'INTERNAL_SERVER_ERROR',
-    message: 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.'
+    message: err.message || 'Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.',
+    stack: err.stack,
+    error: err.toString()
   });
 };
