@@ -76,7 +76,16 @@ Hãy trả về kết quả dưới dạng JSON chuẩn có cấu trúc chính x
           prompt
         ],
         config: {
-          responseMimeType: 'application/json'
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: 'OBJECT',
+            properties: {
+              title: { type: 'STRING', description: 'Tiêu đề bài học' },
+              refinedScript: { type: 'STRING', description: 'Nội dung kiến thức cốt lõi' },
+              qualityScore: { type: 'NUMBER', description: 'Điểm chất lượng từ 1.0 đến 10.0' }
+            },
+            required: ['title', 'refinedScript', 'qualityScore']
+          }
         }
       });
 
@@ -134,7 +143,24 @@ Hãy trả về kết quả dưới dạng JSON là một mảng các câu hỏi
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-          responseMimeType: 'application/json'
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              properties: {
+                id: { type: 'STRING' },
+                text: { type: 'STRING' },
+                options: { 
+                  type: 'ARRAY',
+                  items: { type: 'STRING' }
+                },
+                correctOptionIndex: { type: 'INTEGER' },
+                explanation: { type: 'STRING' }
+              },
+              required: ['id', 'text', 'options', 'correctOptionIndex', 'explanation']
+            }
+          }
         }
       });
 
@@ -178,7 +204,14 @@ Hãy trả về kết quả dưới dạng JSON chuẩn có cấu trúc chính x
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-          responseMimeType: 'application/json'
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: 'OBJECT',
+            properties: {
+              mergedScript: { type: 'STRING' }
+            },
+            required: ['mergedScript']
+          }
         }
       });
 
@@ -227,7 +260,21 @@ Lưu ý: ID của câu hỏi mới phải giữ nguyên ID cũ là "${faultyQues
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-          responseMimeType: 'application/json'
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: 'OBJECT',
+            properties: {
+              id: { type: 'STRING' },
+              text: { type: 'STRING' },
+              options: { 
+                type: 'ARRAY',
+                items: { type: 'STRING' }
+              },
+              correctOptionIndex: { type: 'INTEGER' },
+              explanation: { type: 'STRING' }
+            },
+            required: ['id', 'text', 'options', 'correctOptionIndex', 'explanation']
+          }
         }
       });
 
