@@ -4,7 +4,7 @@
   "description": "Backend server for Ytb-quiz using Clean Architecture",
   "main": "dist/presentation/app.js",
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "build": "rimraf dist && tsc && node scripts/download-ytdlp.js",
     "start": "node dist/presentation/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/presentation/app.ts"
   },
